@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Winter Arc Tracker</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Winter Arc">
+  <meta name="theme-color" content="#000000">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            iosDark: '#000000',
+            iosCard: '#1c1c1e',
+            iosCardSecondary: '#2c2c2e',
+            iosCardBorder: '#38383a',
+            iosSubtext: '#8e8e93',
+            iosKeypad: '#242426',
+            iosBlue: '#0a84ff',
+            iosGreen: '#30d158',
+            iosRed: '#ff453a'
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            num: ['Sora', '-apple-system', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+    }
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-num {
+      font-family: 'Sora', -apple-system, system-ui, sans-serif;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .sheet-transition {
+      transition: transform 0.32s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.25s ease;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-black text-white antialiased">
+
+  <!-- TOP APP BAR -->
+  <header class="w-full pt-2 px-4 pb-2 flex items-center justify-between shrink-0 z-10 border-b border-neutral-900/80">
+    <!-- Arrow-Only Date Selector -->
+    <div class="flex items-center space-x-1.5 bg-[#1c1c1e] px-2 py-1 rounded-full border border-neutral-800 shadow-sm">
+      <button id="prevDayBtn" aria-label="Previous Day" class="w-7 h-7 rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3c] active:scale-90 transition-all flex items-center justify-center text-white">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+
+      <span id="dateDisplayLabel" class="text-xs sm:text-sm font-semibold font-num text-neutral-200 px-2 min-w-[125px] text-center select-none truncate">Today, 01 Oct</span>
+
+      <button id="nextDayBtn" aria-label="Next Day" class="w-7 h-7 rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3c] active:scale-90 transition-all flex items-center justify-center text-white">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 3-Dots Action Button -->
+    <button id="moreMenuBtn" aria-label="More options" class="w-9 h-9 rounded-full bg-[#1c1c1e] hover:bg-[#2c2c2e] active:scale-90 transition-all flex items-center justify-center text-white border border-neutral-800">
+      <svg class="w-5 h-5 text-neutral-200" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- MAIN WRAPPER (Tailored to fit iPhone 13 Screen) -->
+  <main class="flex-1 flex flex-col px-3.5 pt-2 pb-3 overflow-hidden gap-2">
+    
+    <!-- BIG DAY EXECUTION BAR CARD -->
+    <section class="bg-[#1c1c1e] rounded-2xl p-3 border border-[#2c2c2e] shadow-lg shrink-0">
+      <div class="flex items-center justify-between mb-1.5">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Day Execution</span>
+          <span id="streakBadge" class="text-[10px] font-num bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded-full border border-neutral-700/60">0d Streak</span>
+        </div>
+        <div class="flex items-baseline space-x-1.5">
+          <span id="doneRatioLabel" class="text-xs text-neutral-400 font-num">0/15</span>
+          <span id="percentLabel" class="text-sm font-bold font-num text-emerald-400">0%</span>
+        </div>
+      </div>
+
+      <!-- Enlarged Progress Track -->
+      <div class="w-full bg-[#2c2c2e] h-3 rounded-full overflow-hidden p-0.5 border border-neutral-700/40">
+        <div id="executionProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full transition-all duration-300 w-0"></div>
+      </div>
+    </section>
+
+    <!-- 15 GOALS CONTAINER (Fitted for iPhone 13, scrollable if > 15) -->
+    <section class="flex-1 overflow-y-auto custom-scrollbar rounded-2xl border border-[#2c2c2e] bg-[#121214] p-1.5 space-y-1">
+      <div id="goalsContainer" class="flex flex-col gap-1">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+  </main>
+
+  <!-- =============================================================
+       KANNAKK BOOK THEMED 3-DOTS ACTION SHEET
+       ============================================================= -->
+  <div id="moreActionSheet" class="fixed inset-0 z-50 bg-black/70 hidden flex-col justify-end p-4 backdrop-blur-sm">
+    <div class="bg-[#1c1c1e] rounded-2xl border border-neutral-800 divide-y divide-neutral-800 overflow-hidden mb-3">
+      
+      <!-- Manage / Edit Goals -->
+      <button id="openGoalsManagerBtn" class="w-full py-3.5 px-4 text-left text-white text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          <span>Edit Goals</span>
+        </div>
+        <div class="flex items-center space-x-2 text-neutral-400 text-xs">
+          <span id="goalsCountBadge">15 Goals</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </button>
+
+      <!-- 90-Day Arc Heatmap & Statistics -->
+      <button id="openHeatmapBtn" class="w-full py-3.5 px-4 text-left text-white text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span>Winter Arc Heatmap</span>
+        </div>
+        <div class="flex items-center space-x-2 text-neutral-400 text-xs">
+          <span>Overview</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </div>
+      </button>
+
+      <!-- Haptic Feedback Toggle Switch -->
+      <div class="w-full py-3 px-4 flex items-center justify-between text-white text-sm font-medium">
+        <div class="flex items-center space-x-3">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+          <span>Haptic & Audio Feedback</span>
+        </div>
+        <button id="hapticToggleBtn" type="button" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-blue-600 focus:outline-none">
+          <span id="hapticToggleThumb" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-5"></span>
+        </button>
+      </div>
+
+      <!-- Export Tracker Data -->
+      <button id="menuExportBtn" class="w-full py-3.5 px-4 text-left text-white text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <span>Export History (CSV)</span>
+        </div>
+        <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+
+      <!-- Reset & Clear Day Data -->
+      <button id="menuResetDayBtn" class="w-full py-3.5 px-4 text-left text-red-500 text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          <span>Clear Selected Day</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Dismiss button -->
+    <button id="closeMoreSheet" class="w-full py-3.5 bg-[#2c2c2e] text-white font-semibold rounded-2xl active:scale-98">Cancel</button>
+    
+    <!-- HRM Branding matching Kannakk Book -->
+    <div class="text-center text-[11px] tracking-widest uppercase text-neutral-500 font-medium pt-3 pb-1">
+      A &nbsp; HRM &nbsp; APPLICATION
+    </div>
+  </div>
+
+  <!-- =============================================================
+       GOALS MANAGER MODAL
+       ============================================================= -->
+  <div id="goalsManagerModal" class="fixed inset-0 z-50 bg-black/70 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-5 space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
+        <h3 class="text-base font-bold text-white">Edit Arc Goals</h3>
+        <button id="closeGoalsManagerBtn" class="w-7 h-7 rounded-full bg-[#2c2c2e] text-neutral-400 flex items-center justify-center active:scale-90">✕</button>
+      </div>
+      
+      <!-- New Goal Input -->
+      <div class="flex space-x-2">
+        <input id="newGoalInput" type="text" placeholder="Add custom goal..." class="flex-1 bg-[#2c2c2e] text-white text-xs px-3.5 py-2.5 rounded-xl border border-neutral-700 focus:outline-none">
+        <button id="addNewGoalBtn" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all">Add</button>
+      </div>
+
+      <!-- Current Goals List -->
+      <div id="goalsManagerList" class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-neutral-800 space-y-1 pr-1"></div>
+    </div>
+  </div>
+
+  <!-- =============================================================
+       90-DAY HEATMAP MODAL
+       ============================================================= -->
+  <div id="heatmapModal" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-5 space-y-4 max-h-[88vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
+        <div>
+          <h3 class="text-base font-bold text-white">Winter Arc Progress</h3>
+          <p class="text-[11px] text-neutral-400">90-Day Execution Matrix</p>
+        </div>
+        <button id="closeHeatmapBtn" class="w-7 h-7 rounded-full bg-[#2c2c2e] text-neutral-400 flex items-center justify-center active:scale-90">✕</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
+          <div class="text-[10px] text-neutral-400">Total Tracked</div>
+          <div id="statTotalDays" class="text-lg font-bold font-num text-white">0</div>
+        </div>
+        <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
+          <div class="text-[10px] text-neutral-400">Conquered</div>
+          <div id="statPerfectDays" class="text-lg font-bold font-num text-emerald-400">0</div>
+        </div>
+        <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
+          <div class="text-[10px] text-neutral-400">Best Streak</div>
+          <div id="statBestStreak" class="text-lg font-bold font-num text-blue-400">0d</div>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-1">
+        <div id="heatmapGrid" class="grid grid-cols-10 gap-1.5 p-1 bg-[#121214] rounded-2xl border border-neutral-800"></div>
+      </div>
+
+      <div class="flex items-center justify-between text-[11px] text-neutral-400 px-1 border-t border-neutral-800 pt-2">
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#242426]"></span> Incomplete</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-700"></span> Partial</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span> 100% Locked</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT STATE ENGINE -->
+  <script>
+    const STORAGE_GOALS_KEY = 'winter_arc_goals_list';
+    const STORAGE_LOGS_KEY = 'winter_arc_daily_logs';
+    const HAPTIC_KEY = 'winter_arc_haptic_enabled';
+
+    const default15Goals = [
+      "Wake up early at 5:00 AM",
+      "Morning intense workout / lift",
+      "Hit 10,000 daily steps",
+      "Drink 3.5 liters of clean water",
+      "Cold shower discipline",
+      "Zero sugar & zero junk food",
+      "100% strict diet / hit protein goal",
+      "Read 15 pages of non-fiction",
+      "2.5 hours deep focused work",
+      "No alcohol or cheat indulgences",
+      "Zero mindless doomscrolling",
+      "15 minutes evening reflection / plan",
+      "Take core daily vitamins & omega",
+      "No screen 45 mins before bedtime",
+      "Sleep 7-8 hours sound rest"
+    ];
+
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    let state = {
+      hapticEnabled: localStorage.getItem(HAPTIC_KEY) !== 'false',
+      goals: JSON.parse(localStorage.getItem(STORAGE_GOALS_KEY) || JSON.stringify(default15Goals)),
+      logs: JSON.parse(localStorage.getItem(STORAGE_LOGS_KEY) || '{}')
+    };
+
+    function saveState() {
+      localStorage.setItem(STORAGE_GOALS_KEY, JSON.stringify(state.goals));
+      localStorage.setItem(STORAGE_LOGS_KEY, JSON.stringify(state.logs));
+      localStorage.setItem(HAPTIC_KEY, state.hapticEnabled);
+    }
+
+    function getDateKey(d) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    const audioCtx = typeof AudioContext !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
+    function playAudio(frequency, duration) {
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function vibrate(type = 'default') {
+      if (!state.hapticEnabled) return;
+      if (navigator.vibrate) {
+        if (type === 'done') navigator.vibrate([15, 30, 20]);
+        else if (type === 'not_done') navigator.vibrate(25);
+        else navigator.vibrate(10);
+      }
+      if (type === 'done') playAudio(520, 0.08);
+      else if (type === 'not_done') playAudio(180, 0.08);
+      else playAudio(280, 0.04);
+    }
+
+    function formatDisplayDate(d) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const isToday = d.getTime() === today.getTime();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const monthStr = monthNames[d.getMonth()];
+
+      if (isToday) return `Today, ${dayStr} ${monthStr}`;
+      return `${dayStr} ${monthStr} ${d.getFullYear()}`;
+    }
+
+    function calculateStreak() {
+      let streak = 0;
+      let checkDate = new Date();
+      checkDate.setHours(0, 0, 0, 0);
+
+      while (true) {
+        const key = getDateKey(checkDate);
+        const dayRecord = state.logs[key];
+        if (!dayRecord) break;
+
+        const totalGoals = state.goals.length;
+        const doneCount = Object.values(dayRecord).filter(v => v === 'done').length;
+
+        if (totalGoals > 0 && doneCount === totalGoals) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    }
+
+    function renderDashboard() {
+      document.getElementById('dateDisplayLabel').textContent = formatDisplayDate(currentDate);
+
+      const dateKey = getDateKey(currentDate);
+      const dayLog = state.logs[dateKey] || {};
+
+      let doneCount = 0;
+      let totalGoals = state.goals.length;
+
+      const goalsContainer = document.getElementById('goalsContainer');
+      goalsContainer.innerHTML = '';
+
+      state.goals.forEach((goalTitle, index) => {
+        const status = dayLog[index] || null; // 'done', 'not_done', or null
+        if (status === 'done') doneCount++;
+
+        const row = document.createElement('div');
+        // Compact height tailored to fit 15 rows cleanly on iPhone 13
+        row.className = `flex items-center justify-between px-2.5 py-1.5 sm:py-2 rounded-xl border transition-all ${
+          status === 'done' 
+            ? 'bg-[#18281d]/50 border-emerald-900/50' 
+            : status === 'not_done' 
+            ? 'bg-[#2b1818]/50 border-red-950/60' 
+            : 'bg-[#1c1c1e] border-neutral-800/80'
+        }`;
+
+        // Habit title without 1, 2, 3...
+        const textWrapper = document.createElement('div');
+        textWrapper.className = 'flex-1 min-w-0 pr-2';
+        textWrapper.innerHTML = `
+          <div class="text-xs sm:text-[13px] font-medium leading-tight truncate ${
+            status === 'done' ? 'text-neutral-400 line-through' : status === 'not_done' ? 'text-red-300' : 'text-neutral-200'
+          }">
+            ${goalTitle}
+          </div>
+        `;
+
+        // Done (Tick) and Not Done (Cross) Action Buttons
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center space-x-1 shrink-0';
+
+        // Tick Button
+        const tickBtn = document.createElement('button');
+        tickBtn.setAttribute('aria-label', 'Mark Done');
+        tickBtn.className = `w-7 h-7 rounded-lg flex items-center justify-center transition-transform active:scale-75 ${
+          status === 'done'
+            ? 'bg-emerald-500 text-black shadow-[0_0_8px_rgba(48,209,88,0.4)]'
+            : 'bg-[#2c2c2e] hover:bg-[#343438] text-neutral-400'
+        }`;
+        tickBtn.innerHTML = `
+          <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        `;
+        tickBtn.onclick = () => {
+          toggleGoalStatus(index, 'done');
+        };
+
+        // Cross Button
+        const crossBtn = document.createElement('button');
+        crossBtn.setAttribute('aria-label', 'Mark Not Done');
+        crossBtn.className = `w-7 h-7 rounded-lg flex items-center justify-center transition-transform active:scale-75 ${
+          status === 'not_done'
+            ? 'bg-red-500 text-white shadow-[0_0_8px_rgba(255,69,58,0.4)]'
+            : 'bg-[#2c2c2e] hover:bg-[#343438] text-neutral-400'
+        }`;
+        crossBtn.innerHTML = `
+          <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2.6" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        `;
+        crossBtn.onclick = () => {
+          toggleGoalStatus(index, 'not_done');
+        };
+
+        actions.appendChild(tickBtn);
+        actions.appendChild(crossBtn);
+
+        row.appendChild(textWrapper);
+        row.appendChild(actions);
+        goalsContainer.appendChild(row);
+      });
+
+      // Update execution bar
+      const pct = totalGoals > 0 ? Math.round((doneCount / totalGoals) * 100) : 0;
+      document.getElementById('doneRatioLabel').textContent = `${doneCount}/${totalGoals}`;
+      document.getElementById('percentLabel').textContent = `${pct}%`;
+      document.getElementById('executionProgressBar').style.width = `${pct}%`;
+
+      // Update streak badge
+      const streak = calculateStreak();
+      document.getElementById('streakBadge').textContent = `${streak}d Streak`;
+      document.getElementById('goalsCountBadge').textContent = `${totalGoals} Goals`;
+    }
+
+    function toggleGoalStatus(index, targetStatus) {
+      const dateKey = getDateKey(currentDate);
+      if (!state.logs[dateKey]) state.logs[dateKey] = {};
+
+      const currentStatus = state.logs[dateKey][index];
+      if (currentStatus === targetStatus) {
+        delete state.logs[dateKey][index];
+        vibrate();
+      } else {
+        state.logs[dateKey][index] = targetStatus;
+        vibrate(targetStatus);
+      }
+
+      saveState();
+      renderDashboard();
+    }
+
+    // ARROW NAVIGATION ONLY
+    document.getElementById('prevDayBtn').addEventListener('click', () => {
+      vibrate();
+      currentDate.setDate(currentDate.getDate() - 1);
+      renderDashboard();
+    });
+
+    document.getElementById('nextDayBtn').addEventListener('click', () => {
+      vibrate();
+      currentDate.setDate(currentDate.getDate() + 1);
+      renderDashboard();
+    });
+
+    // 3-DOT SHEET CONTROLS
+    const moreMenuBtn = document.getElementById('moreMenuBtn');
+    const moreActionSheet = document.getElementById('moreActionSheet');
+    const closeMoreSheet = document.getElementById('closeMoreSheet');
+
+    moreMenuBtn.addEventListener('click', () => {
+      vibrate();
+      moreActionSheet.classList.remove('hidden');
+      moreActionSheet.classList.add('flex');
+    });
+
+    closeMoreSheet.addEventListener('click', () => {
+      vibrate();
+      moreActionSheet.classList.add('hidden');
+      moreActionSheet.classList.remove('flex');
+    });
+
+    // GOALS MANAGER MODAL
+    const openGoalsManagerBtn = document.getElementById('openGoalsManagerBtn');
+    const goalsManagerModal = document.getElementById('goalsManagerModal');
+    const closeGoalsManagerBtn = document.getElementById('closeGoalsManagerBtn');
+    const goalsManagerList = document.getElementById('goalsManagerList');
+    const addNewGoalBtn = document.getElementById('addNewGoalBtn');
+    const newGoalInput = document.getElementById('newGoalInput');
+
+    function renderGoalsManager() {
+      goalsManagerList.innerHTML = '';
+      state.goals.forEach((goal, idx) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between py-2.5 text-xs text-white';
+        item.innerHTML = `
+          <span class="truncate flex-1 pr-2 text-neutral-300 font-medium">${goal}</span>
+          <button class="delete-goal-btn text-neutral-500 hover:text-red-400 p-1 rounded-lg active:scale-90 transition-colors" data-idx="${idx}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        `;
+        goalsManagerList.appendChild(item);
+      });
+
+      goalsManagerList.querySelectorAll('.delete-goal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          vibrate();
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          if (state.goals.length <= 1) {
+            alert("Keep at least one goal in your arc.");
+            return;
+          }
+          state.goals.splice(idx, 1);
+          saveState();
+          renderGoalsManager();
+          renderDashboard();
+        });
+      });
+    }
+
+    openGoalsManagerBtn.addEventListener('click', () => {
+      vibrate();
+      moreActionSheet.classList.add('hidden');
+      moreActionSheet.classList.remove('flex');
+      renderGoalsManager();
+      goalsManagerModal.classList.remove('hidden');
+      goalsManagerModal.classList.add('flex');
+    });
+
+    closeGoalsManagerBtn.addEventListener('click', () => {
+      vibrate();
+      goalsManagerModal.classList.add('hidden');
+      goalsManagerModal.classList.remove('flex');
+    });
+
+    addNewGoalBtn.addEventListener('click', () => {
+      const val = newGoalInput.value.trim();
+      if (!val) return;
+      vibrate();
+      state.goals.push(val);
+      newGoalInput.value = '';
+      saveState();
+      renderGoalsManager();
+      renderDashboard();
+    });
+
+    // HEATMAP MODAL
+    const openHeatmapBtn = document.getElementById('openHeatmapBtn');
+    const heatmapModal = document.getElementById('heatmapModal');
+    const closeHeatmapBtn = document.getElementById('closeHeatmapBtn');
+    const heatmapGrid = document.getElementById('heatmapGrid');
+
+    function renderHeatmap() {
+      heatmapGrid.innerHTML = '';
+      const totalDays = 90;
+      let trackedCount = 0;
+      let perfectCount = 0;
+
+      const keys = Object.keys(state.logs);
+      trackedCount = keys.length;
+
+      keys.forEach(k => {
+        const d = state.logs[k];
+        const done = Object.values(d).filter(v => v === 'done').length;
+        if (state.goals.length > 0 && done === state.goals.length) perfectCount++;
+      });
+
+      document.getElementById('statTotalDays').textContent = trackedCount;
+      document.getElementById('statPerfectDays').textContent = perfectCount;
+      document.getElementById('statBestStreak').textContent = `${calculateStreak()}d`;
+
+      // Draw 90 cells
+      for (let i = 0; i < totalDays; i++) {
+        const cellDate = new Date();
+        cellDate.setHours(0, 0, 0, 0);
+        cellDate.setDate(cellDate.getDate() - (totalDays - 1 - i));
+
+        const key = getDateKey(cellDate);
+        const dayRecord = state.logs[key];
+
+        let cellColor = 'bg-[#242426]';
+        let title = `Day ${i + 1}: Not logged`;
+
+        if (dayRecord) {
+          const done = Object.values(dayRecord).filter(v => v === 'done').length;
+          const ratio = state.goals.length > 0 ? done / state.goals.length : 0;
+
+          if (ratio === 1) {
+            cellColor = 'bg-emerald-400';
+            title = `${key}: 100% Locked In`;
+          } else if (ratio > 0) {
+            cellColor = 'bg-emerald-700';
+            title = `${key}: ${Math.round(ratio * 100)}% Execution`;
+          }
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `w-full aspect-square rounded-md ${cellColor} transition-transform active:scale-75 cursor-pointer`;
+        cell.title = title;
+        cell.onclick = () => {
+          vibrate();
+          currentDate = new Date(cellDate);
+          renderDashboard();
+          heatmapModal.classList.add('hidden');
+          heatmapModal.classList.remove('flex');
+        };
+        heatmapGrid.appendChild(cell);
+      }
+    }
+
+    openHeatmapBtn.addEventListener('click', () => {
+      vibrate();
+      moreActionSheet.classList.add('hidden');
+      moreActionSheet.classList.remove('flex');
+      renderHeatmap();
+      heatmapModal.classList.remove('hidden');
+      heatmapModal.classList.add('flex');
+    });
+
+    closeHeatmapBtn.addEventListener('click', () => {
+      vibrate();
+      heatmapModal.classList.add('hidden');
+      heatmapModal.classList.remove('flex');
+    });
+
+    // HAPTIC SWITCH
+    const hapticToggleBtn = document.getElementById('hapticToggleBtn');
+    const hapticToggleThumb = document.getElementById('hapticToggleThumb');
+
+    function syncHapticUI() {
+      if (state.hapticEnabled) {
+        hapticToggleBtn.classList.remove('bg-neutral-700');
+        hapticToggleBtn.classList.add('bg-blue-600');
+        hapticToggleThumb.classList.remove('translate-x-0');
+        hapticToggleThumb.classList.add('translate-x-5');
+      } else {
+        hapticToggleBtn.classList.remove('bg-blue-600');
+        hapticToggleBtn.classList.add('bg-neutral-700');
+        hapticToggleThumb.classList.remove('translate-x-5');
+        hapticToggleThumb.classList.add('translate-x-0');
+      }
+    }
+
+    hapticToggleBtn.addEventListener('click', () => {
+      state.hapticEnabled = !state.hapticEnabled;
+      syncHapticUI();
+      saveState();
+      vibrate();
+    });
+
+    // EXPORT TO CSV
+    document.getElementById('menuExportBtn').addEventListener('click', () => {
+      vibrate();
+      const keys = Object.keys(state.logs).sort();
+      if (keys.length === 0) {
+        alert("No logs to export.");
+        return;
+      }
+
+      let csv = "Date,Goal,Status\n";
+      keys.forEach(k => {
+        const dayRecord = state.logs[k];
+        Object.entries(dayRecord).forEach(([idx, val]) => {
+          const gName = state.goals[idx] || `Goal ${idx}`;
+          csv += `"${k}","${gName}","${val}"\n`;
+        });
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `winter_arc_logs_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      moreActionSheet.classList.add('hidden');
+      moreActionSheet.classList.remove('flex');
+    });
+
+    // RESET SELECTED DAY
+    document.getElementById('menuResetDayBtn').addEventListener('click', () => {
+      vibrate();
+      const key = getDateKey(currentDate);
+      if (confirm(`Reset all tracked data for ${key}?`)) {
+        delete state.logs[key];
+        saveState();
+        renderDashboard();
+      }
+      moreActionSheet.classList.add('hidden');
+      moreActionSheet.classList.remove('flex');
+    });
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      syncHapticUI();
+      renderDashboard();
+    });
+  </script>
+</body>
+</html>
