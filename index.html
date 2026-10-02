@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Winter Arc Tracker</title>
+  <title>Winter Arc</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Winter Arc">
@@ -67,15 +67,11 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    .drag-item.dragging {
-      opacity: 0.45;
-      background-color: #2c2c2e;
-    }
   </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-black text-white antialiased">
 
-  <!-- TOP APP BAR: Pushed down for iOS notch/island clearance -->
+  <!-- TOP APP BAR -->
   <header class="w-full pt-4 sm:pt-5 px-4 pb-2.5 flex items-center justify-between shrink-0 z-10 border-b border-neutral-900/80">
     <!-- Arrow-Only Date Selector -->
     <div class="flex items-center space-x-1.5 bg-[#1c1c1e] px-2 py-1 rounded-full border border-neutral-800 shadow-sm">
@@ -85,7 +81,7 @@
         </svg>
       </button>
 
-      <span id="dateDisplayLabel" class="text-xs sm:text-sm font-semibold font-num text-neutral-200 px-2 min-w-[125px] text-center select-none truncate">Today, 01 Oct</span>
+      <span id="dateDisplayLabel" class="text-xs sm:text-sm font-semibold font-num text-neutral-200 px-2 min-w-[125px] text-center select-none truncate">Today</span>
 
       <button id="nextDayBtn" aria-label="Next Day" class="w-7 h-7 rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3c] active:scale-90 transition-all flex items-center justify-center text-white">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -105,12 +101,11 @@
   <!-- MAIN WRAPPER -->
   <main class="flex-1 flex flex-col px-3.5 pt-2 pb-3 overflow-hidden gap-2">
     
-    <!-- BIG DAY EXECUTION BAR CARD: Clickable to view Heatmap -->
+    <!-- BIG DAY EXECUTION BAR CARD -->
     <section id="dayExecutionCard" role="button" tabindex="0" class="bg-[#1c1c1e] hover:bg-[#222225] active:scale-[0.99] cursor-pointer rounded-2xl p-3 border border-[#2c2c2e] shadow-lg shrink-0 transition-all">
       <div class="flex items-center justify-between mb-1.5">
         <div class="flex items-center space-x-2">
           <span class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Day Execution</span>
-          <!-- Replaced streak badge with ratio -->
           <span id="doneRatioLabel" class="text-[10px] font-num bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded-full border border-neutral-700/60">0/15</span>
         </div>
         <div class="flex items-baseline space-x-1.5">
@@ -172,32 +167,52 @@
         <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </button>
 
-      <!-- Clear Selected Day -->
-      <button id="menuResetDayBtn" class="w-full py-3.5 px-4 text-left text-red-500 text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
+      <!-- Clear Data Trigger Button -->
+      <button id="menuClearSubmenuBtn" class="w-full py-3.5 px-4 text-left text-red-500 text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
-          <span>Clear Selected Day</span>
+          <span>Clear Data</span>
         </div>
+        <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </button>
     </div>
 
     <!-- Dismiss Button -->
     <button id="closeMoreSheet" class="w-full py-3.5 bg-[#2c2c2e] text-white font-semibold rounded-2xl active:scale-98">Cancel</button>
-    
-    <div class="text-center text-[11px] tracking-widest uppercase text-neutral-500 font-medium pt-3 pb-1">
-      A HRM APPLICATION
+  </div>
+
+  <!-- CLEAR CONFIRMATION MODAL -->
+  <div id="clearDataModal" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-xs border border-neutral-800 p-5 space-y-4 text-center">
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-white">Clear Data Options</h3>
+        <p class="text-xs text-neutral-400">Choose what you would like to reset</p>
+      </div>
+
+      <div class="space-y-2">
+        <button id="clearSelectedDayConfirmBtn" class="w-full py-3 px-4 rounded-xl bg-[#2c2c2e] hover:bg-neutral-700 text-white text-xs font-semibold active:scale-95 transition-all">
+          Clear Selected Day
+        </button>
+        <button id="clearAllDaysConfirmBtn" class="w-full py-3 px-4 rounded-xl bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 text-xs font-semibold active:scale-95 transition-all">
+          Clear All Days
+        </button>
+      </div>
+
+      <button id="cancelClearModalBtn" class="w-full py-2.5 text-xs text-neutral-400 hover:text-white font-medium">
+        Cancel
+      </button>
     </div>
   </div>
 
-  <!-- GOALS MANAGER MODAL (With Drag and Drop Reordering) -->
+  <!-- GOALS MANAGER MODAL (Tap to select and swap positions) -->
   <div id="goalsManagerModal" class="fixed inset-0 z-50 bg-black/70 hidden items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-5 space-y-4 max-h-[85vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
         <div>
-          <h3 class="text-base font-bold text-white">Edit Arc Goals</h3>
-          <p class="text-[10px] text-neutral-400">Drag items by handle to reorder</p>
+          <h3 class="text-base font-bold text-white">Edit Goals</h3>
+          <p id="reorderInstructionsText" class="text-[10px] text-neutral-400">Tap one goal, then tap another to swap positions</p>
         </div>
         <button id="closeGoalsManagerBtn" class="w-7 h-7 rounded-full bg-[#2c2c2e] text-neutral-400 flex items-center justify-center active:scale-90">✕</button>
       </div>
@@ -208,41 +223,40 @@
         <button id="addNewGoalBtn" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all">Add</button>
       </div>
 
-      <!-- Current Goals Reorderable List -->
-      <div id="goalsManagerList" class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-neutral-800 space-y-1 pr-1"></div>
+      <!-- Current Goals Tap-to-Swap List -->
+      <div id="goalsManagerList" class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1"></div>
     </div>
   </div>
 
-  <!-- 92-DAY WINTER ARC HEATMAP MODAL (Oct 1 to Dec 31) -->
-  <div id="heatmapModal" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-5 space-y-4 max-h-[88vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
+  <!-- 92-DAY HEATMAP MODAL (Single-Frame View for iPhone 13) -->
+  <div id="heatmapModal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-3 sm:p-4 backdrop-blur-sm">
+    <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-4 space-y-3 flex flex-col">
+      <div class="flex items-center justify-between pb-1 border-b border-neutral-800">
         <div>
-          <h3 class="text-base font-bold text-white">Winter Arc Progress</h3>
-          <p class="text-[11px] text-neutral-400">Oct 01 - Dec 31 (92 Days)</p>
+          <h3 class="text-sm font-bold text-white tracking-wide">Winter Arc Progress</h3>
+          <p class="text-[10px] text-neutral-400">Oct 01 - Dec 31 (92 Days)</p>
         </div>
         <button id="closeHeatmapBtn" class="w-7 h-7 rounded-full bg-[#2c2c2e] text-neutral-400 flex items-center justify-center active:scale-90">✕</button>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
-          <div class="text-[10px] text-neutral-400">Days Logged</div>
-          <div id="statTotalDays" class="text-lg font-bold font-num text-white">0</div>
-        </div>
-        <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
-          <div class="text-[10px] text-neutral-400">Completed (100%)</div>
-          <div id="statPerfectDays" class="text-lg font-bold font-num text-emerald-400">0</div>
+      <!-- Single Box Showing Current Streak -->
+      <div class="bg-[#242426] py-2 px-3 rounded-xl border border-neutral-800 text-center flex items-center justify-between">
+        <span class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Active Streak</span>
+        <div class="flex items-center space-x-1.5">
+          <span class="text-orange-400 text-base">🔥</span>
+          <span id="statStreakDays" class="text-lg font-bold font-num text-emerald-400">0 Days</span>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-1">
-        <div id="heatmapGrid" class="grid grid-cols-7 gap-1.5 p-2 bg-[#121214] rounded-2xl border border-neutral-800"></div>
+      <!-- 92-Day Single-Frame Grid (14 Columns fits fully on iPhone 13) -->
+      <div class="p-2 bg-[#121214] rounded-2xl border border-neutral-800 flex flex-col items-center">
+        <div id="heatmapGrid" class="grid grid-cols-14 gap-1 w-full" style="grid-template-columns: repeat(14, minmax(0, 1fr));"></div>
       </div>
 
-      <div class="flex items-center justify-between text-[11px] text-neutral-400 px-1 border-t border-neutral-800 pt-2">
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#242426]"></span> Incomplete</span>
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-700"></span> Partial</span>
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span> Completed</span>
+      <div class="flex items-center justify-between text-[10px] text-neutral-400 px-1 pt-1 border-t border-neutral-800">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-xs bg-[#242426]"></span> None</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-xs bg-emerald-700"></span> Partial</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-xs bg-emerald-400"></span> 100%</span>
       </div>
     </div>
   </div>
@@ -309,34 +323,103 @@
       return `${year}-${month}-${day}`;
     }
 
+    // WEB AUDIO & HAPTIC SYSTEM
     const audioCtx = typeof AudioContext !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
-    function playAudio(frequency, duration) {
-      if (!audioCtx) return;
+    
+    function playSound(type) {
+      if (!state.hapticEnabled || !audioCtx) return;
       try {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
+        const now = audioCtx.currentTime;
+
+        if (type === 'done') {
+          // Energetic two-tone chord for completion
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc1.type = 'sine';
+          osc2.type = 'triangle';
+          osc1.frequency.setValueAtTime(587.33, now); // D5
+          osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
+          osc2.frequency.setValueAtTime(880, now);
+          osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.12); // D6
+
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 0.18);
+          osc2.stop(now + 0.18);
+        } else if (type === 'not_done') {
+          // Low blunt rejection tone
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.1);
+
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'swap') {
+          // Subtle ascending pop
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(350, now);
+          osc.frequency.exponentialRampToValueAtTime(650, now + 0.08);
+
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else {
+          // Crisp subtle tap
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(420, now);
+
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.04);
+        }
       } catch (e) {}
     }
 
-    function vibrate(type = 'default') {
+    function triggerFeedback(type = 'tap') {
       if (!state.hapticEnabled) return;
+      playSound(type);
+
       if (navigator.vibrate) {
-        if (type === 'done') navigator.vibrate([15, 30, 20]);
-        else if (type === 'not_done') navigator.vibrate(25);
+        if (type === 'done') navigator.vibrate([20, 30, 20]);
+        else if (type === 'not_done') navigator.vibrate(35);
+        else if (type === 'swap') navigator.vibrate([15, 20]);
         else navigator.vibrate(10);
       }
-      if (type === 'done') playAudio(520, 0.08);
-      else if (type === 'not_done') playAudio(180, 0.08);
-      else playAudio(280, 0.04);
     }
 
     function formatDisplayDate(d) {
@@ -350,6 +433,41 @@
 
       if (isToday) return `Today, ${dayStr} ${monthStr}`;
       return `${dayStr} ${monthStr} ${d.getFullYear()}`;
+    }
+
+    function calculateStreak() {
+      if (state.goals.length === 0) return 0;
+      let streak = 0;
+      let checkDate = new Date();
+      checkDate.setHours(0, 0, 0, 0);
+
+      // If today is not completely done yet, check if yesterday was part of streak
+      const todayKey = getDateKey(checkDate);
+      const todayLog = state.logs[todayKey] || {};
+      const todayDone = Object.values(todayLog).filter(v => v === 'done').length;
+
+      if (todayDone === state.goals.length) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        // Today is pending, start checking from yesterday backwards
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      while (true) {
+        const key = getDateKey(checkDate);
+        const dayRecord = state.logs[key];
+        if (!dayRecord) break;
+
+        const done = Object.values(dayRecord).filter(v => v === 'done').length;
+        if (done === state.goals.length) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
     }
 
     function renderDashboard() {
@@ -440,10 +558,10 @@
       const currentStatus = state.logs[dateKey][goalId];
       if (currentStatus === targetStatus) {
         delete state.logs[dateKey][goalId];
-        vibrate();
+        triggerFeedback('tap');
       } else {
         state.logs[dateKey][goalId] = targetStatus;
-        vibrate(targetStatus);
+        triggerFeedback(targetStatus);
       }
 
       saveState();
@@ -452,32 +570,74 @@
 
     // ARROW NAVIGATION
     document.getElementById('prevDayBtn').addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       currentDate.setDate(currentDate.getDate() - 1);
       renderDashboard();
     });
 
     document.getElementById('nextDayBtn').addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       currentDate.setDate(currentDate.getDate() + 1);
       renderDashboard();
     });
 
-    // 3-DOT CONTROLS
+    // 3-DOTS ACTION SHEET CONTROLS
     const moreMenuBtn = document.getElementById('moreMenuBtn');
     const moreActionSheet = document.getElementById('moreActionSheet');
     const closeMoreSheet = document.getElementById('closeMoreSheet');
 
     moreMenuBtn.addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       moreActionSheet.classList.remove('hidden');
       moreActionSheet.classList.add('flex');
     });
 
     closeMoreSheet.addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       moreActionSheet.classList.add('hidden');
       moreActionSheet.classList.remove('flex');
+    });
+
+    // CLEAR DATA MODAL HANDLERS
+    const menuClearSubmenuBtn = document.getElementById('menuClearSubmenuBtn');
+    const clearDataModal = document.getElementById('clearDataModal');
+    const cancelClearModalBtn = document.getElementById('cancelClearModalBtn');
+    const clearSelectedDayConfirmBtn = document.getElementById('clearSelectedDayConfirmBtn');
+    const clearAllDaysConfirmBtn = document.getElementById('clearAllDaysConfirmBtn');
+
+    menuClearSubmenuBtn.addEventListener('click', () => {
+      triggerFeedback('tap');
+      moreActionSheet.classList.add('hidden');
+      moreActionSheet.classList.remove('flex');
+      clearDataModal.classList.remove('hidden');
+      clearDataModal.classList.add('flex');
+    });
+
+    cancelClearModalBtn.addEventListener('click', () => {
+      triggerFeedback('tap');
+      clearDataModal.classList.add('hidden');
+      clearDataModal.classList.remove('flex');
+    });
+
+    clearSelectedDayConfirmBtn.addEventListener('click', () => {
+      triggerFeedback('not_done');
+      const key = getDateKey(currentDate);
+      delete state.logs[key];
+      saveState();
+      renderDashboard();
+      clearDataModal.classList.add('hidden');
+      clearDataModal.classList.remove('flex');
+    });
+
+    clearAllDaysConfirmBtn.addEventListener('click', () => {
+      triggerFeedback('not_done');
+      if (confirm("Are you completely sure you want to erase ALL logged history for all days?")) {
+        state.logs = {};
+        saveState();
+        renderDashboard();
+        clearDataModal.classList.add('hidden');
+        clearDataModal.classList.remove('flex');
+      }
     });
 
     // TAP ON DAY EXECUTION TO OPEN HEATMAP
@@ -486,19 +646,19 @@
     const closeHeatmapBtn = document.getElementById('closeHeatmapBtn');
 
     dayExecutionCard.addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       renderHeatmap();
       heatmapModal.classList.remove('hidden');
       heatmapModal.classList.add('flex');
     });
 
     closeHeatmapBtn.addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       heatmapModal.classList.add('hidden');
       heatmapModal.classList.remove('flex');
     });
 
-    // WINTER ARC HEATMAP (OCTOBER 1 TO DECEMBER 31)
+    // WINTER ARC HEATMAP (SINGLE SCREEN IPHONE 13 FIT)
     function renderHeatmap() {
       const heatmapGrid = document.getElementById('heatmapGrid');
       heatmapGrid.innerHTML = '';
@@ -508,12 +668,9 @@
         year = currentDate.getFullYear() - 1;
       }
 
-      const arcStart = new Date(year, 9, 1);
-      const arcEnd = new Date(year, 11, 31);
       const totalArcDays = 92;
-
-      let loggedDays = 0;
-      let completedDays = 0;
+      const currentStreak = calculateStreak();
+      document.getElementById('statStreakDays').textContent = `${currentStreak} ${currentStreak === 1 ? 'Day' : 'Days'}`;
 
       for (let i = 0; i < totalArcDays; i++) {
         const cellDate = new Date(year, 9, 1 + i);
@@ -527,14 +684,12 @@
         let title = `Day ${dayNumber} (${formatDisplayDate(cellDate)}): Not logged`;
 
         if (dayRecord && Object.keys(dayRecord).length > 0) {
-          loggedDays++;
           const done = Object.values(dayRecord).filter(v => v === 'done').length;
           const ratio = state.goals.length > 0 ? done / state.goals.length : 0;
 
           if (ratio === 1) {
             cellColor = 'bg-emerald-400';
-            completedDays++;
-            title = `${formatDisplayDate(cellDate)}: Completed`;
+            title = `${formatDisplayDate(cellDate)}: 100% Completed`;
           } else if (ratio > 0) {
             cellColor = 'bg-emerald-700';
             title = `${formatDisplayDate(cellDate)}: ${Math.round(ratio * 100)}% Execution`;
@@ -542,10 +697,11 @@
         }
 
         const cell = document.createElement('div');
-        cell.className = `w-full aspect-square rounded-md ${cellColor} transition-transform active:scale-75 cursor-pointer border border-white/5`;
+        // Compact squares sized to ensure complete single-screen fit on iPhone 13
+        cell.className = `w-full aspect-square rounded-[3px] ${cellColor} transition-transform active:scale-75 cursor-pointer border border-white/5`;
         cell.title = title;
         cell.onclick = () => {
-          vibrate();
+          triggerFeedback('tap');
           currentDate = new Date(cellDate);
           renderDashboard();
           heatmapModal.classList.add('hidden');
@@ -553,134 +709,114 @@
         };
         heatmapGrid.appendChild(cell);
       }
-
-      document.getElementById('statTotalDays').textContent = loggedDays;
-      document.getElementById('statPerfectDays').textContent = completedDays;
     }
 
-    // DRAG-AND-DROP GOALS MANAGER
+    // TAP-TO-SWAP GOALS MANAGER
     const openGoalsManagerBtn = document.getElementById('openGoalsManagerBtn');
     const goalsManagerModal = document.getElementById('goalsManagerModal');
     const closeGoalsManagerBtn = document.getElementById('closeGoalsManagerBtn');
     const goalsManagerList = document.getElementById('goalsManagerList');
     const addNewGoalBtn = document.getElementById('addNewGoalBtn');
     const newGoalInput = document.getElementById('newGoalInput');
+    const reorderInstructionsText = document.getElementById('reorderInstructionsText');
 
-    let draggedItemIdx = null;
+    let selectedGoalIdx = null;
 
     function renderGoalsManager() {
       goalsManagerList.innerHTML = '';
+      if (selectedGoalIdx !== null) {
+        reorderInstructionsText.textContent = "Tap another goal to swap positions with selected";
+        reorderInstructionsText.className = "text-[10px] text-blue-400 font-semibold";
+      } else {
+        reorderInstructionsText.textContent = "Tap one goal, then tap another to swap positions";
+        reorderInstructionsText.className = "text-[10px] text-neutral-400";
+      }
+
       state.goals.forEach((goal, idx) => {
         const item = document.createElement('div');
-        item.draggable = true;
-        item.dataset.index = idx;
-        item.className = 'drag-item flex items-center justify-between py-2 px-1 text-xs text-white rounded-lg select-none hover:bg-neutral-800/40 transition-colors';
-        item.innerHTML = `
-          <div class="flex items-center space-x-2 flex-1 min-w-0 pr-2">
-            <span class="cursor-grab active:cursor-grabbing text-neutral-500 hover:text-neutral-300 p-1 drag-handle">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
-              </svg>
-            </span>
-            <span class="truncate text-neutral-200 font-medium">${goal.title}</span>
-          </div>
-          <button class="delete-goal-btn text-neutral-500 hover:text-red-400 p-1.5 rounded-lg active:scale-90 transition-colors" data-idx="${idx}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-          </button>
+        const isSelected = selectedGoalIdx === idx;
+
+        item.className = `flex items-center justify-between py-2 px-3 text-xs rounded-xl transition-all cursor-pointer border ${
+          isSelected 
+            ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(10,132,255,0.3)]' 
+            : 'bg-[#242426] border-neutral-800 hover:bg-[#2c2c2e]'
+        }`;
+
+        const textWrapper = document.createElement('div');
+        textWrapper.className = 'flex items-center space-x-2.5 flex-1 min-w-0 pr-2';
+        textWrapper.innerHTML = `
+          <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-num ${
+            isSelected ? 'bg-blue-500 text-white font-bold' : 'bg-neutral-800 text-neutral-400'
+          }">${idx + 1}</span>
+          <span class="truncate ${isSelected ? 'text-blue-200 font-semibold' : 'text-neutral-200 font-medium'}">${goal.title}</span>
         `;
 
-        // Desktop HTML5 drag events
-        item.addEventListener('dragstart', (e) => {
-          draggedItemIdx = idx;
-          item.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move';
-        });
+        textWrapper.onclick = () => handleGoalRowTap(idx);
 
-        item.addEventListener('dragend', () => {
-          item.classList.remove('dragging');
-          draggedItemIdx = null;
-        });
+        const deleteBtn = document.createElement('button');
+        deleteBtn.setAttribute('aria-label', 'Delete goal');
+        deleteBtn.className = 'delete-goal-btn text-neutral-500 hover:text-red-400 p-1.5 rounded-lg active:scale-90 transition-colors shrink-0';
+        deleteBtn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        `;
 
-        item.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        });
-
-        item.addEventListener('drop', (e) => {
-          e.preventDefault();
-          const targetIdx = parseInt(item.dataset.index);
-          if (draggedItemIdx !== null && draggedItemIdx !== targetIdx) {
-            const movedGoal = state.goals.splice(draggedItemIdx, 1)[0];
-            state.goals.splice(targetIdx, 0, movedGoal);
-            saveState();
-            renderGoalsManager();
-            renderDashboard();
-            vibrate();
-          }
-        });
-
-        // Touch event support for iOS reordering
-        const handle = item.querySelector('.drag-handle');
-        handle.addEventListener('touchstart', (e) => {
-          draggedItemIdx = idx;
-          item.classList.add('dragging');
-        }, { passive: true });
-
-        handle.addEventListener('touchmove', (e) => {
-          const touchLocation = e.targetTouches[0];
-          const elem = document.elementFromPoint(touchLocation.clientX, touchLocation.clientY);
-          const targetRow = elem ? elem.closest('.drag-item') : null;
-          if (targetRow && targetRow.dataset.index !== undefined) {
-            const overIdx = parseInt(targetRow.dataset.index);
-            if (overIdx !== draggedItemIdx) {
-              const movedGoal = state.goals.splice(draggedItemIdx, 1)[0];
-              state.goals.splice(overIdx, 0, movedGoal);
-              draggedItemIdx = overIdx;
-              saveState();
-              renderGoalsManager();
-              renderDashboard();
-            }
-          }
-        }, { passive: true });
-
-        handle.addEventListener('touchend', () => {
-          item.classList.remove('dragging');
-          draggedItemIdx = null;
-          vibrate();
-        });
-
-        goalsManagerList.appendChild(item);
-      });
-
-      goalsManagerList.querySelectorAll('.delete-goal-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          vibrate();
-          const idx = parseInt(btn.getAttribute('data-idx'));
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          triggerFeedback('tap');
           if (state.goals.length <= 1) {
             alert("Keep at least one goal in your arc.");
             return;
           }
           state.goals.splice(idx, 1);
+          selectedGoalIdx = null;
           saveState();
           renderGoalsManager();
           renderDashboard();
-        });
+        };
+
+        item.appendChild(textWrapper);
+        item.appendChild(deleteBtn);
+        goalsManagerList.appendChild(item);
       });
     }
 
+    function handleGoalRowTap(idx) {
+      if (selectedGoalIdx === null) {
+        selectedGoalIdx = idx;
+        triggerFeedback('tap');
+        renderGoalsManager();
+      } else if (selectedGoalIdx === idx) {
+        selectedGoalIdx = null;
+        triggerFeedback('tap');
+        renderGoalsManager();
+      } else {
+        // Swap positions
+        const temp = state.goals[selectedGoalIdx];
+        state.goals[selectedGoalIdx] = state.goals[idx];
+        state.goals[idx] = temp;
+        selectedGoalIdx = null;
+        triggerFeedback('swap');
+        saveState();
+        renderGoalsManager();
+        renderDashboard();
+      }
+    }
+
     openGoalsManagerBtn.addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       moreActionSheet.classList.add('hidden');
       moreActionSheet.classList.remove('flex');
+      selectedGoalIdx = null;
       renderGoalsManager();
       goalsManagerModal.classList.remove('hidden');
       goalsManagerModal.classList.add('flex');
     });
 
     closeGoalsManagerBtn.addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
+      selectedGoalIdx = null;
       goalsManagerModal.classList.add('hidden');
       goalsManagerModal.classList.remove('flex');
     });
@@ -688,7 +824,7 @@
     addNewGoalBtn.addEventListener('click', () => {
       const val = newGoalInput.value.trim();
       if (!val) return;
-      vibrate();
+      triggerFeedback('done');
       state.goals.push({ id: `g_${Date.now()}`, title: val });
       newGoalInput.value = '';
       saveState();
@@ -696,7 +832,7 @@
       renderDashboard();
     });
 
-    // HAPTIC CONTROLS
+    // HAPTIC CONTROLS TOGGLE
     const hapticToggleBtn = document.getElementById('hapticToggleBtn');
     const hapticToggleThumb = document.getElementById('hapticToggleThumb');
 
@@ -718,12 +854,12 @@
       state.hapticEnabled = !state.hapticEnabled;
       syncHapticUI();
       saveState();
-      vibrate();
+      triggerFeedback('tap');
     });
 
     // EXPORT CSV
     document.getElementById('menuExportBtn').addEventListener('click', () => {
-      vibrate();
+      triggerFeedback('tap');
       const keys = Object.keys(state.logs).sort();
       if (keys.length === 0) {
         alert("No logs to export.");
@@ -752,19 +888,6 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      moreActionSheet.classList.add('hidden');
-      moreActionSheet.classList.remove('flex');
-    });
-
-    // CLEAR DAY
-    document.getElementById('menuResetDayBtn').addEventListener('click', () => {
-      vibrate();
-      const key = getDateKey(currentDate);
-      if (confirm(`Reset all tracked data for ${key}?`)) {
-        delete state.logs[key];
-        saveState();
-        renderDashboard();
-      }
       moreActionSheet.classList.add('hidden');
       moreActionSheet.classList.remove('flex');
     });
