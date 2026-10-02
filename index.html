@@ -50,7 +50,7 @@
     body {
       background-color: #000000;
       color: #ffffff;
-      padding-top: env(safe-area-inset-top);
+      padding-top: max(env(safe-area-inset-top), 16px);
       padding-bottom: env(safe-area-inset-bottom);
       overscroll-behavior: none;
       -webkit-font-smoothing: antialiased;
@@ -60,9 +60,6 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.02em;
     }
-    .sheet-transition {
-      transition: transform 0.32s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.25s ease;
-    }
     .custom-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -70,12 +67,16 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    .drag-item.dragging {
+      opacity: 0.45;
+      background-color: #2c2c2e;
+    }
   </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-black text-white antialiased">
 
-  <!-- TOP APP BAR -->
-  <header class="w-full pt-2 px-4 pb-2 flex items-center justify-between shrink-0 z-10 border-b border-neutral-900/80">
+  <!-- TOP APP BAR: Pushed down for iOS notch/island clearance -->
+  <header class="w-full pt-4 sm:pt-5 px-4 pb-2.5 flex items-center justify-between shrink-0 z-10 border-b border-neutral-900/80">
     <!-- Arrow-Only Date Selector -->
     <div class="flex items-center space-x-1.5 bg-[#1c1c1e] px-2 py-1 rounded-full border border-neutral-800 shadow-sm">
       <button id="prevDayBtn" aria-label="Previous Day" class="w-7 h-7 rounded-full bg-[#2c2c2e] hover:bg-[#3a3a3c] active:scale-90 transition-all flex items-center justify-center text-white">
@@ -101,39 +102,35 @@
     </button>
   </header>
 
-  <!-- MAIN WRAPPER (Tailored to fit iPhone 13 Screen) -->
+  <!-- MAIN WRAPPER -->
   <main class="flex-1 flex flex-col px-3.5 pt-2 pb-3 overflow-hidden gap-2">
     
-    <!-- BIG DAY EXECUTION BAR CARD -->
-    <section class="bg-[#1c1c1e] rounded-2xl p-3 border border-[#2c2c2e] shadow-lg shrink-0">
+    <!-- BIG DAY EXECUTION BAR CARD: Clickable to view Heatmap -->
+    <section id="dayExecutionCard" role="button" tabindex="0" class="bg-[#1c1c1e] hover:bg-[#222225] active:scale-[0.99] cursor-pointer rounded-2xl p-3 border border-[#2c2c2e] shadow-lg shrink-0 transition-all">
       <div class="flex items-center justify-between mb-1.5">
         <div class="flex items-center space-x-2">
           <span class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Day Execution</span>
-          <span id="streakBadge" class="text-[10px] font-num bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded-full border border-neutral-700/60">0d Streak</span>
+          <!-- Replaced streak badge with ratio -->
+          <span id="doneRatioLabel" class="text-[10px] font-num bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded-full border border-neutral-700/60">0/15</span>
         </div>
         <div class="flex items-baseline space-x-1.5">
-          <span id="doneRatioLabel" class="text-xs text-neutral-400 font-num">0/15</span>
           <span id="percentLabel" class="text-sm font-bold font-num text-emerald-400">0%</span>
         </div>
       </div>
 
-      <!-- Enlarged Progress Track -->
+      <!-- Progress Track -->
       <div class="w-full bg-[#2c2c2e] h-3 rounded-full overflow-hidden p-0.5 border border-neutral-700/40">
         <div id="executionProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full transition-all duration-300 w-0"></div>
       </div>
     </section>
 
-    <!-- 15 GOALS CONTAINER (Fitted for iPhone 13, scrollable if > 15) -->
+    <!-- GOALS CONTAINER -->
     <section class="flex-1 overflow-y-auto custom-scrollbar rounded-2xl border border-[#2c2c2e] bg-[#121214] p-1.5 space-y-1">
-      <div id="goalsContainer" class="flex flex-col gap-1">
-        <!-- Rendered dynamically -->
-      </div>
+      <div id="goalsContainer" class="flex flex-col gap-1"></div>
     </section>
   </main>
 
-  <!-- =============================================================
-       KANNAKK BOOK THEMED 3-DOTS ACTION SHEET
-       ============================================================= -->
+  <!-- 3-DOTS ACTION SHEET -->
   <div id="moreActionSheet" class="fixed inset-0 z-50 bg-black/70 hidden flex-col justify-end p-4 backdrop-blur-sm">
     <div class="bg-[#1c1c1e] rounded-2xl border border-neutral-800 divide-y divide-neutral-800 overflow-hidden mb-3">
       
@@ -151,21 +148,7 @@
         </div>
       </button>
 
-      <!-- 90-Day Arc Heatmap & Statistics -->
-      <button id="openHeatmapBtn" class="w-full py-3.5 px-4 text-left text-white text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-          <span>Winter Arc Heatmap</span>
-        </div>
-        <div class="flex items-center space-x-2 text-neutral-400 text-xs">
-          <span>Overview</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </div>
-      </button>
-
-      <!-- Haptic Feedback Toggle Switch -->
+      <!-- Haptic Toggle Switch -->
       <div class="w-full py-3 px-4 flex items-center justify-between text-white text-sm font-medium">
         <div class="flex items-center space-x-3">
           <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -178,7 +161,7 @@
         </button>
       </div>
 
-      <!-- Export Tracker Data -->
+      <!-- Export CSV -->
       <button id="menuExportBtn" class="w-full py-3.5 px-4 text-left text-white text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -189,7 +172,7 @@
         <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
       </button>
 
-      <!-- Reset & Clear Day Data -->
+      <!-- Clear Selected Day -->
       <button id="menuResetDayBtn" class="w-full py-3.5 px-4 text-left text-red-500 text-sm font-medium active:bg-[#2c2c2e] flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -200,22 +183,22 @@
       </button>
     </div>
 
-    <!-- Dismiss button -->
+    <!-- Dismiss Button -->
     <button id="closeMoreSheet" class="w-full py-3.5 bg-[#2c2c2e] text-white font-semibold rounded-2xl active:scale-98">Cancel</button>
     
-    <!-- HRM Branding matching Kannakk Book -->
     <div class="text-center text-[11px] tracking-widest uppercase text-neutral-500 font-medium pt-3 pb-1">
-      A &nbsp; HRM &nbsp; APPLICATION
+      A HRM APPLICATION
     </div>
   </div>
 
-  <!-- =============================================================
-       GOALS MANAGER MODAL
-       ============================================================= -->
+  <!-- GOALS MANAGER MODAL (With Drag and Drop Reordering) -->
   <div id="goalsManagerModal" class="fixed inset-0 z-50 bg-black/70 hidden items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-5 space-y-4 max-h-[85vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
-        <h3 class="text-base font-bold text-white">Edit Arc Goals</h3>
+        <div>
+          <h3 class="text-base font-bold text-white">Edit Arc Goals</h3>
+          <p class="text-[10px] text-neutral-400">Drag items by handle to reorder</p>
+        </div>
         <button id="closeGoalsManagerBtn" class="w-7 h-7 rounded-full bg-[#2c2c2e] text-neutral-400 flex items-center justify-center active:scale-90">✕</button>
       </div>
       
@@ -225,81 +208,91 @@
         <button id="addNewGoalBtn" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all">Add</button>
       </div>
 
-      <!-- Current Goals List -->
+      <!-- Current Goals Reorderable List -->
       <div id="goalsManagerList" class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-neutral-800 space-y-1 pr-1"></div>
     </div>
   </div>
 
-  <!-- =============================================================
-       90-DAY HEATMAP MODAL
-       ============================================================= -->
+  <!-- 92-DAY WINTER ARC HEATMAP MODAL (Oct 1 to Dec 31) -->
   <div id="heatmapModal" class="fixed inset-0 z-50 bg-black/75 hidden items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-[#1c1c1e] rounded-3xl w-full max-w-sm border border-neutral-800 p-5 space-y-4 max-h-[88vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
         <div>
           <h3 class="text-base font-bold text-white">Winter Arc Progress</h3>
-          <p class="text-[11px] text-neutral-400">90-Day Execution Matrix</p>
+          <p class="text-[11px] text-neutral-400">Oct 01 - Dec 31 (92 Days)</p>
         </div>
         <button id="closeHeatmapBtn" class="w-7 h-7 rounded-full bg-[#2c2c2e] text-neutral-400 flex items-center justify-center active:scale-90">✕</button>
       </div>
 
-      <div class="grid grid-cols-3 gap-2">
+      <div class="grid grid-cols-2 gap-2">
         <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
-          <div class="text-[10px] text-neutral-400">Total Tracked</div>
+          <div class="text-[10px] text-neutral-400">Days Logged</div>
           <div id="statTotalDays" class="text-lg font-bold font-num text-white">0</div>
         </div>
         <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
-          <div class="text-[10px] text-neutral-400">Conquered</div>
+          <div class="text-[10px] text-neutral-400">Completed (100%)</div>
           <div id="statPerfectDays" class="text-lg font-bold font-num text-emerald-400">0</div>
-        </div>
-        <div class="bg-[#242426] p-2.5 rounded-xl border border-neutral-800 text-center">
-          <div class="text-[10px] text-neutral-400">Best Streak</div>
-          <div id="statBestStreak" class="text-lg font-bold font-num text-blue-400">0d</div>
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar p-1">
-        <div id="heatmapGrid" class="grid grid-cols-10 gap-1.5 p-1 bg-[#121214] rounded-2xl border border-neutral-800"></div>
+        <div id="heatmapGrid" class="grid grid-cols-7 gap-1.5 p-2 bg-[#121214] rounded-2xl border border-neutral-800"></div>
       </div>
 
       <div class="flex items-center justify-between text-[11px] text-neutral-400 px-1 border-t border-neutral-800 pt-2">
         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[#242426]"></span> Incomplete</span>
         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-700"></span> Partial</span>
-        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span> 100% Locked</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span> Completed</span>
       </div>
     </div>
   </div>
 
   <!-- JAVASCRIPT STATE ENGINE -->
   <script>
-    const STORAGE_GOALS_KEY = 'winter_arc_goals_list';
-    const STORAGE_LOGS_KEY = 'winter_arc_daily_logs';
+    const STORAGE_GOALS_KEY = 'winter_arc_goals_list_v2';
+    const STORAGE_LOGS_KEY = 'winter_arc_daily_logs_v2';
     const HAPTIC_KEY = 'winter_arc_haptic_enabled';
 
-    const default15Goals = [
-      "Wake up early at 5:00 AM",
-      "Morning intense workout / lift",
-      "Hit 10,000 daily steps",
-      "Drink 3.5 liters of clean water",
-      "Cold shower discipline",
-      "Zero sugar & zero junk food",
-      "100% strict diet / hit protein goal",
-      "Read 15 pages of non-fiction",
-      "2.5 hours deep focused work",
-      "No alcohol or cheat indulgences",
-      "Zero mindless doomscrolling",
-      "15 minutes evening reflection / plan",
-      "Take core daily vitamins & omega",
-      "No screen 45 mins before bedtime",
-      "Sleep 7-8 hours sound rest"
+    const defaultGoals = [
+      { id: "g_1", title: "Wake up early at 5:00 AM" },
+      { id: "g_2", title: "Morning intense workout / lift" },
+      { id: "g_3", title: "Hit 10,000 daily steps" },
+      { id: "g_4", title: "Drink 3.5 liters of clean water" },
+      { id: "g_5", title: "Cold shower discipline" },
+      { id: "g_6", title: "Zero sugar & zero junk food" },
+      { id: "g_7", title: "100% strict diet / hit protein goal" },
+      { id: "g_8", title: "Read 15 pages of non-fiction" },
+      { id: "g_9", title: "2.5 hours deep focused work" },
+      { id: "g_10", title: "No alcohol or cheat indulgences" },
+      { id: "g_11", title: "Zero mindless doomscrolling" },
+      { id: "g_12", title: "15 minutes evening reflection / plan" },
+      { id: "g_13", title: "Take core daily vitamins & omega" },
+      { id: "g_14", title: "No screen 45 mins before bedtime" },
+      { id: "g_15", title: "Sleep 7-8 hours sound rest" }
     ];
 
     let currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
+    function loadInitialGoals() {
+      const stored = localStorage.getItem(STORAGE_GOALS_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            if (typeof parsed[0] === 'string') {
+              return parsed.map((t, idx) => ({ id: `g_${Date.now()}_${idx}`, title: t }));
+            }
+            return parsed;
+          }
+        } catch (e) {}
+      }
+      return defaultGoals;
+    }
+
     let state = {
       hapticEnabled: localStorage.getItem(HAPTIC_KEY) !== 'false',
-      goals: JSON.parse(localStorage.getItem(STORAGE_GOALS_KEY) || JSON.stringify(default15Goals)),
+      goals: loadInitialGoals(),
       logs: JSON.parse(localStorage.getItem(STORAGE_LOGS_KEY) || '{}')
     };
 
@@ -359,29 +352,6 @@
       return `${dayStr} ${monthStr} ${d.getFullYear()}`;
     }
 
-    function calculateStreak() {
-      let streak = 0;
-      let checkDate = new Date();
-      checkDate.setHours(0, 0, 0, 0);
-
-      while (true) {
-        const key = getDateKey(checkDate);
-        const dayRecord = state.logs[key];
-        if (!dayRecord) break;
-
-        const totalGoals = state.goals.length;
-        const doneCount = Object.values(dayRecord).filter(v => v === 'done').length;
-
-        if (totalGoals > 0 && doneCount === totalGoals) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-      return streak;
-    }
-
     function renderDashboard() {
       document.getElementById('dateDisplayLabel').textContent = formatDisplayDate(currentDate);
 
@@ -394,12 +364,11 @@
       const goalsContainer = document.getElementById('goalsContainer');
       goalsContainer.innerHTML = '';
 
-      state.goals.forEach((goalTitle, index) => {
-        const status = dayLog[index] || null; // 'done', 'not_done', or null
+      state.goals.forEach((goal) => {
+        const status = dayLog[goal.id] || null;
         if (status === 'done') doneCount++;
 
         const row = document.createElement('div');
-        // Compact height tailored to fit 15 rows cleanly on iPhone 13
         row.className = `flex items-center justify-between px-2.5 py-1.5 sm:py-2 rounded-xl border transition-all ${
           status === 'done' 
             ? 'bg-[#18281d]/50 border-emerald-900/50' 
@@ -408,22 +377,19 @@
             : 'bg-[#1c1c1e] border-neutral-800/80'
         }`;
 
-        // Habit title without 1, 2, 3...
         const textWrapper = document.createElement('div');
         textWrapper.className = 'flex-1 min-w-0 pr-2';
         textWrapper.innerHTML = `
           <div class="text-xs sm:text-[13px] font-medium leading-tight truncate ${
             status === 'done' ? 'text-neutral-400 line-through' : status === 'not_done' ? 'text-red-300' : 'text-neutral-200'
           }">
-            ${goalTitle}
+            ${goal.title}
           </div>
         `;
 
-        // Done (Tick) and Not Done (Cross) Action Buttons
         const actions = document.createElement('div');
         actions.className = 'flex items-center space-x-1 shrink-0';
 
-        // Tick Button
         const tickBtn = document.createElement('button');
         tickBtn.setAttribute('aria-label', 'Mark Done');
         tickBtn.className = `w-7 h-7 rounded-lg flex items-center justify-center transition-transform active:scale-75 ${
@@ -436,11 +402,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
           </svg>
         `;
-        tickBtn.onclick = () => {
-          toggleGoalStatus(index, 'done');
-        };
+        tickBtn.onclick = () => toggleGoalStatus(goal.id, 'done');
 
-        // Cross Button
         const crossBtn = document.createElement('button');
         crossBtn.setAttribute('aria-label', 'Mark Not Done');
         crossBtn.className = `w-7 h-7 rounded-lg flex items-center justify-center transition-transform active:scale-75 ${
@@ -453,9 +416,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         `;
-        crossBtn.onclick = () => {
-          toggleGoalStatus(index, 'not_done');
-        };
+        crossBtn.onclick = () => toggleGoalStatus(goal.id, 'not_done');
 
         actions.appendChild(tickBtn);
         actions.appendChild(crossBtn);
@@ -465,28 +426,23 @@
         goalsContainer.appendChild(row);
       });
 
-      // Update execution bar
       const pct = totalGoals > 0 ? Math.round((doneCount / totalGoals) * 100) : 0;
       document.getElementById('doneRatioLabel').textContent = `${doneCount}/${totalGoals}`;
       document.getElementById('percentLabel').textContent = `${pct}%`;
       document.getElementById('executionProgressBar').style.width = `${pct}%`;
-
-      // Update streak badge
-      const streak = calculateStreak();
-      document.getElementById('streakBadge').textContent = `${streak}d Streak`;
       document.getElementById('goalsCountBadge').textContent = `${totalGoals} Goals`;
     }
 
-    function toggleGoalStatus(index, targetStatus) {
+    function toggleGoalStatus(goalId, targetStatus) {
       const dateKey = getDateKey(currentDate);
       if (!state.logs[dateKey]) state.logs[dateKey] = {};
 
-      const currentStatus = state.logs[dateKey][index];
+      const currentStatus = state.logs[dateKey][goalId];
       if (currentStatus === targetStatus) {
-        delete state.logs[dateKey][index];
+        delete state.logs[dateKey][goalId];
         vibrate();
       } else {
-        state.logs[dateKey][index] = targetStatus;
+        state.logs[dateKey][goalId] = targetStatus;
         vibrate(targetStatus);
       }
 
@@ -494,7 +450,7 @@
       renderDashboard();
     }
 
-    // ARROW NAVIGATION ONLY
+    // ARROW NAVIGATION
     document.getElementById('prevDayBtn').addEventListener('click', () => {
       vibrate();
       currentDate.setDate(currentDate.getDate() - 1);
@@ -507,7 +463,7 @@
       renderDashboard();
     });
 
-    // 3-DOT SHEET CONTROLS
+    // 3-DOT CONTROLS
     const moreMenuBtn = document.getElementById('moreMenuBtn');
     const moreActionSheet = document.getElementById('moreActionSheet');
     const closeMoreSheet = document.getElementById('closeMoreSheet');
@@ -524,7 +480,85 @@
       moreActionSheet.classList.remove('flex');
     });
 
-    // GOALS MANAGER MODAL
+    // TAP ON DAY EXECUTION TO OPEN HEATMAP
+    const dayExecutionCard = document.getElementById('dayExecutionCard');
+    const heatmapModal = document.getElementById('heatmapModal');
+    const closeHeatmapBtn = document.getElementById('closeHeatmapBtn');
+
+    dayExecutionCard.addEventListener('click', () => {
+      vibrate();
+      renderHeatmap();
+      heatmapModal.classList.remove('hidden');
+      heatmapModal.classList.add('flex');
+    });
+
+    closeHeatmapBtn.addEventListener('click', () => {
+      vibrate();
+      heatmapModal.classList.add('hidden');
+      heatmapModal.classList.remove('flex');
+    });
+
+    // WINTER ARC HEATMAP (OCTOBER 1 TO DECEMBER 31)
+    function renderHeatmap() {
+      const heatmapGrid = document.getElementById('heatmapGrid');
+      heatmapGrid.innerHTML = '';
+
+      let year = currentDate.getFullYear();
+      if (currentDate.getMonth() < 9) {
+        year = currentDate.getFullYear() - 1;
+      }
+
+      const arcStart = new Date(year, 9, 1);
+      const arcEnd = new Date(year, 11, 31);
+      const totalArcDays = 92;
+
+      let loggedDays = 0;
+      let completedDays = 0;
+
+      for (let i = 0; i < totalArcDays; i++) {
+        const cellDate = new Date(year, 9, 1 + i);
+        cellDate.setHours(0, 0, 0, 0);
+
+        const key = getDateKey(cellDate);
+        const dayRecord = state.logs[key];
+
+        let cellColor = 'bg-[#242426]';
+        const dayNumber = i + 1;
+        let title = `Day ${dayNumber} (${formatDisplayDate(cellDate)}): Not logged`;
+
+        if (dayRecord && Object.keys(dayRecord).length > 0) {
+          loggedDays++;
+          const done = Object.values(dayRecord).filter(v => v === 'done').length;
+          const ratio = state.goals.length > 0 ? done / state.goals.length : 0;
+
+          if (ratio === 1) {
+            cellColor = 'bg-emerald-400';
+            completedDays++;
+            title = `${formatDisplayDate(cellDate)}: Completed`;
+          } else if (ratio > 0) {
+            cellColor = 'bg-emerald-700';
+            title = `${formatDisplayDate(cellDate)}: ${Math.round(ratio * 100)}% Execution`;
+          }
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `w-full aspect-square rounded-md ${cellColor} transition-transform active:scale-75 cursor-pointer border border-white/5`;
+        cell.title = title;
+        cell.onclick = () => {
+          vibrate();
+          currentDate = new Date(cellDate);
+          renderDashboard();
+          heatmapModal.classList.add('hidden');
+          heatmapModal.classList.remove('flex');
+        };
+        heatmapGrid.appendChild(cell);
+      }
+
+      document.getElementById('statTotalDays').textContent = loggedDays;
+      document.getElementById('statPerfectDays').textContent = completedDays;
+    }
+
+    // DRAG-AND-DROP GOALS MANAGER
     const openGoalsManagerBtn = document.getElementById('openGoalsManagerBtn');
     const goalsManagerModal = document.getElementById('goalsManagerModal');
     const closeGoalsManagerBtn = document.getElementById('closeGoalsManagerBtn');
@@ -532,19 +566,91 @@
     const addNewGoalBtn = document.getElementById('addNewGoalBtn');
     const newGoalInput = document.getElementById('newGoalInput');
 
+    let draggedItemIdx = null;
+
     function renderGoalsManager() {
       goalsManagerList.innerHTML = '';
       state.goals.forEach((goal, idx) => {
         const item = document.createElement('div');
-        item.className = 'flex items-center justify-between py-2.5 text-xs text-white';
+        item.draggable = true;
+        item.dataset.index = idx;
+        item.className = 'drag-item flex items-center justify-between py-2 px-1 text-xs text-white rounded-lg select-none hover:bg-neutral-800/40 transition-colors';
         item.innerHTML = `
-          <span class="truncate flex-1 pr-2 text-neutral-300 font-medium">${goal}</span>
-          <button class="delete-goal-btn text-neutral-500 hover:text-red-400 p-1 rounded-lg active:scale-90 transition-colors" data-idx="${idx}">
+          <div class="flex items-center space-x-2 flex-1 min-w-0 pr-2">
+            <span class="cursor-grab active:cursor-grabbing text-neutral-500 hover:text-neutral-300 p-1 drag-handle">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
+              </svg>
+            </span>
+            <span class="truncate text-neutral-200 font-medium">${goal.title}</span>
+          </div>
+          <button class="delete-goal-btn text-neutral-500 hover:text-red-400 p-1.5 rounded-lg active:scale-90 transition-colors" data-idx="${idx}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
             </svg>
           </button>
         `;
+
+        // Desktop HTML5 drag events
+        item.addEventListener('dragstart', (e) => {
+          draggedItemIdx = idx;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          draggedItemIdx = null;
+        });
+
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const targetIdx = parseInt(item.dataset.index);
+          if (draggedItemIdx !== null && draggedItemIdx !== targetIdx) {
+            const movedGoal = state.goals.splice(draggedItemIdx, 1)[0];
+            state.goals.splice(targetIdx, 0, movedGoal);
+            saveState();
+            renderGoalsManager();
+            renderDashboard();
+            vibrate();
+          }
+        });
+
+        // Touch event support for iOS reordering
+        const handle = item.querySelector('.drag-handle');
+        handle.addEventListener('touchstart', (e) => {
+          draggedItemIdx = idx;
+          item.classList.add('dragging');
+        }, { passive: true });
+
+        handle.addEventListener('touchmove', (e) => {
+          const touchLocation = e.targetTouches[0];
+          const elem = document.elementFromPoint(touchLocation.clientX, touchLocation.clientY);
+          const targetRow = elem ? elem.closest('.drag-item') : null;
+          if (targetRow && targetRow.dataset.index !== undefined) {
+            const overIdx = parseInt(targetRow.dataset.index);
+            if (overIdx !== draggedItemIdx) {
+              const movedGoal = state.goals.splice(draggedItemIdx, 1)[0];
+              state.goals.splice(overIdx, 0, movedGoal);
+              draggedItemIdx = overIdx;
+              saveState();
+              renderGoalsManager();
+              renderDashboard();
+            }
+          }
+        }, { passive: true });
+
+        handle.addEventListener('touchend', () => {
+          item.classList.remove('dragging');
+          draggedItemIdx = null;
+          vibrate();
+        });
+
         goalsManagerList.appendChild(item);
       });
 
@@ -583,93 +689,14 @@
       const val = newGoalInput.value.trim();
       if (!val) return;
       vibrate();
-      state.goals.push(val);
+      state.goals.push({ id: `g_${Date.now()}`, title: val });
       newGoalInput.value = '';
       saveState();
       renderGoalsManager();
       renderDashboard();
     });
 
-    // HEATMAP MODAL
-    const openHeatmapBtn = document.getElementById('openHeatmapBtn');
-    const heatmapModal = document.getElementById('heatmapModal');
-    const closeHeatmapBtn = document.getElementById('closeHeatmapBtn');
-    const heatmapGrid = document.getElementById('heatmapGrid');
-
-    function renderHeatmap() {
-      heatmapGrid.innerHTML = '';
-      const totalDays = 90;
-      let trackedCount = 0;
-      let perfectCount = 0;
-
-      const keys = Object.keys(state.logs);
-      trackedCount = keys.length;
-
-      keys.forEach(k => {
-        const d = state.logs[k];
-        const done = Object.values(d).filter(v => v === 'done').length;
-        if (state.goals.length > 0 && done === state.goals.length) perfectCount++;
-      });
-
-      document.getElementById('statTotalDays').textContent = trackedCount;
-      document.getElementById('statPerfectDays').textContent = perfectCount;
-      document.getElementById('statBestStreak').textContent = `${calculateStreak()}d`;
-
-      // Draw 90 cells
-      for (let i = 0; i < totalDays; i++) {
-        const cellDate = new Date();
-        cellDate.setHours(0, 0, 0, 0);
-        cellDate.setDate(cellDate.getDate() - (totalDays - 1 - i));
-
-        const key = getDateKey(cellDate);
-        const dayRecord = state.logs[key];
-
-        let cellColor = 'bg-[#242426]';
-        let title = `Day ${i + 1}: Not logged`;
-
-        if (dayRecord) {
-          const done = Object.values(dayRecord).filter(v => v === 'done').length;
-          const ratio = state.goals.length > 0 ? done / state.goals.length : 0;
-
-          if (ratio === 1) {
-            cellColor = 'bg-emerald-400';
-            title = `${key}: 100% Locked In`;
-          } else if (ratio > 0) {
-            cellColor = 'bg-emerald-700';
-            title = `${key}: ${Math.round(ratio * 100)}% Execution`;
-          }
-        }
-
-        const cell = document.createElement('div');
-        cell.className = `w-full aspect-square rounded-md ${cellColor} transition-transform active:scale-75 cursor-pointer`;
-        cell.title = title;
-        cell.onclick = () => {
-          vibrate();
-          currentDate = new Date(cellDate);
-          renderDashboard();
-          heatmapModal.classList.add('hidden');
-          heatmapModal.classList.remove('flex');
-        };
-        heatmapGrid.appendChild(cell);
-      }
-    }
-
-    openHeatmapBtn.addEventListener('click', () => {
-      vibrate();
-      moreActionSheet.classList.add('hidden');
-      moreActionSheet.classList.remove('flex');
-      renderHeatmap();
-      heatmapModal.classList.remove('hidden');
-      heatmapModal.classList.add('flex');
-    });
-
-    closeHeatmapBtn.addEventListener('click', () => {
-      vibrate();
-      heatmapModal.classList.add('hidden');
-      heatmapModal.classList.remove('flex');
-    });
-
-    // HAPTIC SWITCH
+    // HAPTIC CONTROLS
     const hapticToggleBtn = document.getElementById('hapticToggleBtn');
     const hapticToggleThumb = document.getElementById('hapticToggleThumb');
 
@@ -694,7 +721,7 @@
       vibrate();
     });
 
-    // EXPORT TO CSV
+    // EXPORT CSV
     document.getElementById('menuExportBtn').addEventListener('click', () => {
       vibrate();
       const keys = Object.keys(state.logs).sort();
@@ -703,11 +730,14 @@
         return;
       }
 
+      const goalMap = {};
+      state.goals.forEach(g => { goalMap[g.id] = g.title; });
+
       let csv = "Date,Goal,Status\n";
       keys.forEach(k => {
         const dayRecord = state.logs[k];
-        Object.entries(dayRecord).forEach(([idx, val]) => {
-          const gName = state.goals[idx] || `Goal ${idx}`;
+        Object.entries(dayRecord).forEach(([id, val]) => {
+          const gName = goalMap[id] || id;
           csv += `"${k}","${gName}","${val}"\n`;
         });
       });
@@ -726,7 +756,7 @@
       moreActionSheet.classList.remove('flex');
     });
 
-    // RESET SELECTED DAY
+    // CLEAR DAY
     document.getElementById('menuResetDayBtn').addEventListener('click', () => {
       vibrate();
       const key = getDateKey(currentDate);
